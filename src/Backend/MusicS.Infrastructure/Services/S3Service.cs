@@ -53,4 +53,22 @@ public class S3Service: IS3Service
         await _s3Client.DeleteObjectAsync(deleteRequest);
     }
 
+    public async Task<GetObjectMetadataResponse> GetObjectMetadataAsync(string key)
+    {
+        return await _s3Client.GetObjectMetadataAsync(_settings.BucketName, key);
+    }
+
+    public async Task<Stream> GetFileRangeAsync(string key, long start, long end)
+    {
+        var request = new GetObjectRequest
+        {
+            BucketName = _settings.BucketName,
+            Key = key,
+            ByteRange = new ByteRange(start, end)
+        };
+
+        var response = await _s3Client.GetObjectAsync(request);
+        return response.ResponseStream;
+    }
+
 }

@@ -6,4 +6,10 @@
         <Nullable>enable</Nullable>
     </PropertyGroup>
 
+    <ItemGroup>
+      <Reference Include="AWSSDK.S3">
+        <HintPath>..\..\..\..\..\.nuget\packages\awssdk.s3\4.0.0.7\lib\net8.0\AWSSDK.S3.dll</HintPath>
+      </Reference>
+    </ItemGroup>
+
 </Project>
