@@ -1,12 +1,13 @@
 using Amazon.S3.Model;
+using MusicS.Application.DTO;
 
 namespace MusicS.Application.Interfaces;
 
-public interface IS3Service
+public interface IFileService
 {
-    Task UploadFileAsync(string key, Stream inputStream);
+    Task<string> UploadFileAsync(string key, Stream inputStream);
     Task<Stream> GetFileAsync(string key);
     Task DeleteFileAsync(string key);
     Task<Stream> GetFileRangeAsync(string key, long start, long end);
-    Task<GetObjectMetadataResponse> GetObjectMetadataAsync(string key);
+    Task<FileMetadataDto> GetObjectMetadataAsync(string key);
 }

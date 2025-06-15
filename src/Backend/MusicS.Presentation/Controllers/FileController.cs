@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using MusicS.Application.DTO;
 using MusicS.Application.Interfaces;
+using MusicS.Presentation.DTO;
 
 namespace MusicS.Presentation.Controllers;
 
@@ -7,25 +9,27 @@ namespace MusicS.Presentation.Controllers;
 [Route("api/[controller]")]
 public class FileController: ControllerBase
 {
-    private readonly IS3Service _s3Service;
+    private readonly IFileService _fileService;
+    private readonly IMusicService _musicService;
 
-    public FileController(IS3Service s3Service)
+    public FileController(IFileService fileService, IMusicService musicService)
     {
-        _s3Service = s3Service;
+        _fileService = fileService;
+        _musicService = musicService;
     }
     
-    [HttpGet("stream/{fileName}")]
-    public async Task<IActionResult> Stream(string fileName)
+    [HttpGet("stream/{key}")]
+    public async Task<IActionResult> Stream(string key)
     {
         var rangeHeader = Request.Headers["Range"].ToString();
 
-        var metadata = await _s3Service.GetObjectMetadataAsync(fileName);
-        var totalSize = metadata.ContentLength;
+        var metadata = await _fileService.GetObjectMetadataAsync(key);
+        var totalSize = metadata.Size;
 
         if (string.IsNullOrEmpty(rangeHeader))
         {
-            var fullStream = await _s3Service.GetFileAsync(fileName);
-            return File(fullStream, metadata.Headers.ContentType ?? "audio/mpeg", enableRangeProcessing: true);
+            var fullStream = await _fileService.GetFileAsync(key);
+            return File(fullStream, metadata.ContentType ?? "audio/mpeg", enableRangeProcessing: true);
         }
 
         var range = rangeHeader.Replace("bytes=", "").Split('-');
@@ -35,39 +39,51 @@ public class FileController: ControllerBase
             : totalSize - 1;
         var length = end - start + 1;
 
-        var partialStream = await _s3Service.GetFileRangeAsync(fileName, start, end);
+        var partialStream = await _fileService.GetFileRangeAsync(key, start, end);
 
         Response.StatusCode = 206;
         Response.Headers["Content-Range"] = $"bytes {start}-{end}/{totalSize}";
         Response.Headers["Accept-Ranges"] = "bytes";
 
-        return File(partialStream, metadata.Headers.ContentType ?? "audio/mpeg", enableRangeProcessing: false);
+        return File(partialStream, metadata.ContentType ?? "audio/mpeg", enableRangeProcessing: false);
     }
 
     
     [HttpPost("upload")]
-    public async Task<IActionResult> Upload(IFormFile file)
+    public async Task<IActionResult> Upload(UploadSongRequestDto dto)
     {
-        if (file == null || file.Length == 0)
+        if (dto == null || dto.File.Length == 0)
             return BadRequest("Empty file");
 
-        using var stream = file.OpenReadStream();
-        await _s3Service.UploadFileAsync(file.FileName, stream);
+        using var stream = dto.File.OpenReadStream();
+
+        UploadSongDto songDto = new UploadSongDto
+        {
+            File = stream,
+            Title = dto.Title,
+            Artist = dto.Artist,
+            Album = dto.Album,
+            FileName = dto.File.FileName,
+        };
+
+        await _musicService.SaveSong(songDto);
 
         return Ok("Uploaded");
     }
 
-    [HttpGet("download/{fileName}")]
-    public async Task<IActionResult> Download(string fileName)
+    [HttpGet("download/{key}")]
+    public async Task<IActionResult> Download(string key)
     {
-        var stream = await _s3Service.GetFileAsync(fileName);
-        return File(stream, "application/octet-stream", fileName);
+        var stream = await _fileService.GetFileAsync(key);
+        var song = await _musicService.GetSong(key);
+        
+        return File(stream, "application/octet-stream", song.FileName);
     }
 
-    [HttpDelete("{fileName}")]
-    public async Task<IActionResult> Delete(string fileName)
+    [HttpDelete("{key}")]
+    public async Task<IActionResult> Delete(string key)
     {
-        await _s3Service.DeleteFileAsync(fileName);
+        await _musicService.DeleteSong(key);
         return Ok("Deleted");
     }
 }

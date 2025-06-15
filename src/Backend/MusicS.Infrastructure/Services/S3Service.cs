@@ -4,12 +4,13 @@ using Amazon.S3.Model;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MusicS.Application.DTO;
 using MusicS.Application.Interfaces;
 using MusicS.Infrastructure.Helpers;
 
 namespace MusicS.Infrastructure.Services;
 
-public class S3Service: IS3Service
+public class S3Service: IFileService
 {
     private readonly IAmazonS3 _s3Client;
     private readonly ILogger<S3Service> _logger;
@@ -24,7 +25,7 @@ public class S3Service: IS3Service
             RegionEndpoint.GetBySystemName(_settings.Region));
     }
     
-    public async Task UploadFileAsync(string key, Stream inputStream)
+    public async Task<string> UploadFileAsync(string key, Stream inputStream)
     {
         var putRequest = new PutObjectRequest
         {
@@ -34,6 +35,7 @@ public class S3Service: IS3Service
         };
 
         await _s3Client.PutObjectAsync(putRequest);
+        return $"https://{_settings.BucketName}.s3.amazonaws.com/{key}";
     }
 
     public async Task<Stream> GetFileAsync(string key)
@@ -53,9 +55,19 @@ public class S3Service: IS3Service
         await _s3Client.DeleteObjectAsync(deleteRequest);
     }
 
-    public async Task<GetObjectMetadataResponse> GetObjectMetadataAsync(string key)
+    public async Task<FileMetadataDto> GetObjectMetadataAsync(string key)
     {
-        return await _s3Client.GetObjectMetadataAsync(_settings.BucketName, key);
+        var response = await _s3Client.GetObjectMetadataAsync(_settings.BucketName, key);
+        
+        return new FileMetadataDto
+        {
+            Key = key,
+            Size = response.ContentLength,
+            ContentType = response.Headers.ContentType,
+            LastModified = response.LastModified,
+            Metadata = response.Metadata.Keys.ToDictionary(k => k, k => response.Metadata[k])
+        };
+
     }
 
     public async Task<Stream> GetFileRangeAsync(string key, long start, long end)
