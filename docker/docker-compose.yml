@@ -1,0 +1,15 @@
+services:
+  # Database
+  postgres:
+    image: postgres:15
+    container_name: musics_db_container
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: sunday
+      POSTGRES_PASSWORD: sunday
+      POSTGRES_DB: musicsdb
+    volumes:
+      - ./data/postgres:/var/lib/postgres
+
+
