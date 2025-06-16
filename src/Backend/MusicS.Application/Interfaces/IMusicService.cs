@@ -8,4 +8,5 @@ public interface IMusicService
     Task SaveSong(UploadSongDto dto);
     Task DeleteSong(string key);
     Task<MusicInfo> GetSong(string key);
+    Task<IEnumerable<MusicInfo>> GetAllSongs(int page, int pageSize);
 }

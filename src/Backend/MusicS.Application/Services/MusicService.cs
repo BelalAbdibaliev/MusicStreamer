@@ -58,4 +58,9 @@ public class MusicService: IMusicService
     {
         return await _musicRepository.GetInfo(key);
     }
+
+    public async Task<IEnumerable<MusicInfo>> GetAllSongs(int page, int pageSize)
+    {
+        return await _musicRepository.GetAll(page, pageSize);
+    }
 }

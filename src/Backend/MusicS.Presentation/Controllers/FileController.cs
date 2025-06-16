@@ -86,4 +86,10 @@ public class FileController: ControllerBase
         await _musicService.DeleteSong(key);
         return Ok("Deleted");
     }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll([FromQuery]int page, [FromQuery]int pageSize)
+    {
+        return Ok(await _musicService.GetAllSongs(page, pageSize));
+    }
 }
