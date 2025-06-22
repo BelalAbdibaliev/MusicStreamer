@@ -1,5 +1,21 @@
+version: '3.8'
+
 services:
-  # Database
+  musics.presentation:
+    container_name: musics_presentation_container
+    image: musics.presentation
+    build:
+      context: ../
+      dockerfile: src/Backend/MusicS.Presentation/Dockerfile
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    environment:
+      - ASPNETCORE_ENVIRONMENT=Development
+      - ConnectionStrings__DefaultConnection=Host=postgres;Port=5432;Database=musicsdb;Username=sunday;Password=sunday
+    restart: unless-stopped
+
   postgres:
     image: postgres:15
     container_name: musics_db_container
@@ -9,7 +25,8 @@ services:
       POSTGRES_USER: sunday
       POSTGRES_PASSWORD: sunday
       POSTGRES_DB: musicsdb
+      TZ: Europe/Moscow
     volumes:
-      - ./data/postgres:/var/lib/postgres
-
+      - ./data/postgres:/var/lib/postgresql/data
+    restart: unless-stopped
 
