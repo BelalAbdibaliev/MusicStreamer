@@ -22,10 +22,6 @@ builder.Services.AddCors(options =>
         policy.WithOrigins("http://localhost:3000")
             .AllowAnyHeader()
             .AllowAnyMethod();
-        
-        policy.WithOrigins("music-streamer-mocha.vercel.app")
-            .AllowAnyHeader()
-            .AllowAnyHeader();
     });
 });
 
