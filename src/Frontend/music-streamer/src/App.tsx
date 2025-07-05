@@ -28,7 +28,7 @@ function App() {
 
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const API_URL = "http://localhost:8080/api/File";
+  const API_URL = "http://13.62.1.64:8080/api/File";
 
   const fetchTracks = async (pageNumber = 1, pageSize = 10) => {
     try {
@@ -40,7 +40,7 @@ function App() {
 
       const tracksWithUrl = data.map((track: any) => ({
         ...track,
-        url: `http://localhost:8080/api/file/stream/${track.key}`,
+        url: `http://13.62.1.64:8080/api/file/stream/${track.key}`,
       }));
 
       if (pageNumber === 1) {
